@@ -70,3 +70,9 @@ class ShowUser(BaseModel):
     is_blocked: bool
     created_at: datetime
     updated_at: datetime | None
+
+
+class Settings(BaseModel):
+    authjwt_secret_key: str = "secret"
+
+

@@ -53,6 +53,14 @@ async def _get_user_by_id(user_id, session) -> User | None:
             return user
 
 
+async def _get_user_by_username(username, session) -> User | None:
+    async with session.begin():
+        user_dal = UserDAL(session)
+        user = await user_dal.get_user_by_username(username=username)
+        if user is not None:
+            return user
+
+
 async def _delete_user(user_id, session) -> UUID | None:
     async with session.begin():
         user_dal = UserDAL(session)
