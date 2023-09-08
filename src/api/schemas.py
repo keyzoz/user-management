@@ -59,7 +59,7 @@ class Token(BaseModel):
     token_type: str
 
 
-class ShowUser(BaseModel):
+class ShowUser(TunedModel):
     name: str
     surname: str
     username: str
@@ -74,5 +74,3 @@ class ShowUser(BaseModel):
 
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
-
-

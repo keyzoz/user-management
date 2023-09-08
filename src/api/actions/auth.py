@@ -34,28 +34,6 @@ async def authenticate_user(
     return user
 
 
-async def get_current_user_from_token(
-    token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_db)
-):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-    )
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = await _get_user_by_username_for_auth(username=username, session=session)
-    if user is None:
-        raise credentials_exception
-    return user
-
-
 @AuthJWT.load_config
 def get_config():
     return Settings()

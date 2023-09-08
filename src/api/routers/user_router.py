@@ -6,13 +6,12 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.actions.auth import get_current_user_from_token
 from src.api.actions.user import (_create_new_user, _delete_user,
-                                  _get_user_by_id, _update_user, _get_user_by_username)
+                                  _get_user_by_id, _get_user_by_username,
+                                  _update_user)
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
 from src.db.database import get_db
-from src.db.models import User
 
 logger = getLogger(__name__)
 
@@ -33,19 +32,15 @@ async def update_current_user(
     body: UpdateUser,
     Authorize: AuthJWT = Depends(),
     session: AsyncSession = Depends(get_db),
-):
+) -> ShowUser:
     try:
         Authorize.jwt_required()
     except:
-        raise HTTPException(
-            status_code=498, detail="Invalid Token"
-        )
+        raise HTTPException(status_code=498, detail="Invalid Token")
     updated_user_params = body.dict(exclude_none=True)
     cur_user_username = Authorize.get_jwt_subject()
     if cur_user_username is None:
-        raise HTTPException(
-            status_code=404, detail=f"User not found."
-        )
+        raise HTTPException(status_code=404, detail=f"User not found.")
     if updated_user_params == {}:
         raise HTTPException(
             status_code=422,
@@ -68,18 +63,14 @@ async def update_current_user(
 async def get_current_user(
     Authorize: AuthJWT = Depends(),
     session: AsyncSession = Depends(get_db),
-):
+) -> ShowUser:
     try:
         Authorize.jwt_required()
     except:
-        raise HTTPException(
-            status_code=498, detail="Invalid Token"
-        )
+        raise HTTPException(status_code=498, detail="Invalid Token")
     cur_user_username = Authorize.get_jwt_subject()
     if cur_user_username is None:
-        raise HTTPException(
-            status_code=404, detail=f"User not found."
-        )
+        raise HTTPException(status_code=404, detail=f"User not found.")
     user = await _get_user_by_username(cur_user_username, session)
     return user
 
@@ -92,14 +83,10 @@ async def delete_current_user(
     try:
         Authorize.jwt_required()
     except:
-        raise HTTPException(
-            status_code=498, detail="Invalid Token"
-        )
+        raise HTTPException(status_code=498, detail="Invalid Token")
     cur_user_username = Authorize.get_jwt_subject()
     if cur_user_username is None:
-        raise HTTPException(
-            status_code=404, detail=f"User not found."
-        )
+        raise HTTPException(status_code=404, detail=f"User not found.")
     user = await _get_user_by_username(cur_user_username, session)
     deleted_user_id = await _delete_user(user.user_id, session)
     return DeleteUserResponse(deleted_user_id=deleted_user_id)
@@ -111,13 +98,11 @@ async def update_user_by_id(
     body: UpdateUser,
     Authorize: AuthJWT = Depends(),
     session: AsyncSession = Depends(get_db),
-):
+) -> ShowUser:
     try:
         Authorize.jwt_required()
     except:
-        raise HTTPException(
-            status_code=498, detail="Invalid Token"
-        )
+        raise HTTPException(status_code=498, detail="Invalid Token")
     updated_user_params = body.dict(exclude_none=True)
     if updated_user_params == {}:
         raise HTTPException(
@@ -146,13 +131,11 @@ async def get_user_by_id(
     user_id: UUID,
     Authorize: AuthJWT = Depends(),
     session: AsyncSession = Depends(get_db),
-):
+) -> ShowUser:
     try:
         Authorize.jwt_required()
     except:
-        raise HTTPException(
-            status_code=498, detail="Invalid Token"
-        )
+        raise HTTPException(status_code=498, detail="Invalid Token")
     user = await _get_user_by_id(user_id, session)
     if user is None:
         raise HTTPException(
