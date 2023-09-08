@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import HTTPException
-from pydantic import BaseModel, EmailStr, constr, field_validator
+from pydantic import BaseModel, EmailStr, validator
 
 VALIDATE_USER_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 
@@ -32,7 +32,7 @@ class UpdateUser(BaseModel):
     phone_number: str | None = None
     image_s3: str | None = None
 
-    @field_validator("name")
+    @validator("name")
     def validate_name(cls, value):
         if not VALIDATE_USER_PATTERN.match(value):
             raise HTTPException(
@@ -40,7 +40,7 @@ class UpdateUser(BaseModel):
             )
         return value
 
-    @field_validator("surname")
+    @validator("surname")
     def validate_surname(cls, value):
         if not VALIDATE_USER_PATTERN.match(value):
             raise HTTPException(
