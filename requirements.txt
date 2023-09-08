@@ -1,0 +1,17 @@
+alembic==1.9.0
+asyncpg==0.27.0
+aioredis
+pytest==7.2.0
+psycopg2-binary==2.9.5
+pytest-asyncio==0.18.3
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1
+greenlet
+python-multipart
+fastapi==0.99.1
+fastapi_jwt_auth==0.5.0
+pydantic==1.10.11
+uvicorn==0.20.0
+SQLAlchemy==2.0.0
+envparse==0.2.0
