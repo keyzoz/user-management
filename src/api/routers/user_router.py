@@ -12,6 +12,8 @@ from src.api.actions.user import (_create_new_user, _delete_user,
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
 from src.db.database import get_db
+from src.permissons import (is_admin_or_moderator_of_target_group,
+                            is_moderator_of_target_group_or_admin)
 
 logger = getLogger(__name__)
 
@@ -48,7 +50,7 @@ async def update_current_user(
         )
     try:
         user = await _get_user_by_username(cur_user_username, session)
-        updated_user_id = await _update_user(
+        await _update_user(
             updated_user_params=updated_user_params,
             session=session,
             user_id=user.user_id,
@@ -111,19 +113,21 @@ async def update_user_by_id(
         )
 
     user = await _get_user_by_id(user_id, session)
+    cur_user = await _get_user_by_username(Authorize.get_jwt_subject(), session)
+    if not is_moderator_of_target_group_or_admin(cur_user, user):
+        raise HTTPException(status_code=403, detail="Forbidden")
     if user is None:
         raise HTTPException(
             status_code=404, detail=f"User with id {user_id} not found."
         )
     try:
-        updated_user_id = await _update_user(
+        await _update_user(
             updated_user_params=updated_user_params, session=session, user_id=user_id
         )
     except IntegrityError as err:
         logger.error(err)
         raise HTTPException(status_code=503, detail=f"Database error: {err}")
-    updated_user = await _get_user_by_id(user_id=updated_user_id, session=session)
-    return updated_user
+    return user
 
 
 @user_router.get("/{user_id}")
@@ -137,6 +141,9 @@ async def get_user_by_id(
     except:
         raise HTTPException(status_code=498, detail="Invalid Token")
     user = await _get_user_by_id(user_id, session)
+    cur_user = await _get_user_by_username(Authorize.get_jwt_subject(), session)
+    if not is_admin_or_moderator_of_target_group(cur_user, user):
+        raise HTTPException(status_code=403, detail="Forbidden")
     if user is None:
         raise HTTPException(
             status_code=404, detail=f"User with id {user_id} not found."
