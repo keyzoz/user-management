@@ -1,5 +1,6 @@
 *.pyc
 *.pyo
+.env
 /build/
 dist/
 /docs/build/output/
