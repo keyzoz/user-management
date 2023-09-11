@@ -1,12 +1,9 @@
-from datetime import timedelta
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-import settings
 from src.api.actions.auth import authenticate_user
 from src.api.schemas import Token
 from src.db.database import get_db

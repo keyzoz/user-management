@@ -1,14 +1,9 @@
-from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from fastapi_jwt_auth import AuthJWT
-from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 
-import settings
 from src.api.schemas import Settings
 from src.db.dals import UserDAL
-from src.db.database import get_db
 from src.db.models import User
 from src.hashing import Hasher
 
