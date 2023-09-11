@@ -11,6 +11,8 @@ services:
       - ${DB_PORTS}
     networks:
       - custom
+    env_file:
+      - .env
   db_test:
     image: ${IMAGE_NAME}
     restart: always
@@ -22,6 +24,17 @@ services:
       - ${DB_TEST_PORTS}
     networks:
       - custom
+  app:
+    build:
+      context: .
+      target: builder
+    container_name: fastapi-application
+    environment:
+      PORT: 8000
+    ports:
+      - '8000:8000'
+    restart: "no"
+
 networks:
   custom:
     driver: bridge
