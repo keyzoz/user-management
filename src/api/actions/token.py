@@ -35,3 +35,11 @@ def store_reset_token(redis, email, token):
 
 def get_reset_token(redis, email):
     return redis.get(email).decode("utf-8")
+
+
+def store_jti(redis, username, jti):
+    redis.set(username, jti)
+
+
+def get_jti(redis, username):
+    return redis.get(username)

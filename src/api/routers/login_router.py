@@ -7,7 +7,7 @@ from starlette import status
 from src.api.actions.auth import authenticate_user
 from src.api.actions.token import (generate_reset_password_token,
                                    get_reset_token, send_reset_token,
-                                   store_reset_token)
+                                   store_reset_token, get_jti, store_jti)
 from src.api.actions.user import UserCRUD
 from src.api.schemas import Token
 from src.db.database import get_db
@@ -46,8 +46,20 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
             status_code=498,
             detail="Invalid Token/ Refresh Token Required",
         )
-
     current_user = Authorize.get_jwt_subject()
+    jti_of_token = Authorize.get_raw_jwt().get('jti')
+    try:
+        store_token = get_jti(redis, username=current_user)
+    except Exception as e:
+        return {"error": f"error: {str(e)}"}
+    print(store_token)
+    if store_token.decode('utf-8') == jti_of_token:
+        raise HTTPException(
+            status_code=422,
+            detail="Old Token",
+        )
+
+    store_jti(redis, current_user, jti_of_token)
     new_access_token = Authorize.create_access_token(subject=current_user)
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
