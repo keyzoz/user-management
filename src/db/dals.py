@@ -56,6 +56,13 @@ class UserDAL:
         if user_row is not None:
             return user_row[0]
 
+    async def get_user_by_email(self, email: str) -> User | None:
+        query = select(User).where(User.email == email)
+        res = await self.db_session.execute(query)
+        user_row = res.fetchone()
+        if user_row is not None:
+            return user_row[0]
+
     async def update_user(self, user_id=UUID, **kwargs) -> UUID | None:
         query = (
             update(User)
@@ -68,3 +75,16 @@ class UserDAL:
         if update_user_row is not None:
             return update_user_row[0]
 
+    async def update_user_password(
+        self, email: str, hashed_password: str
+    ) -> UUID | None:
+        query = (
+            update(User)
+            .where(and_(User.email == email, User.is_blocked == False))
+            .values(hashed_password=hashed_password)
+            .returning(User.user_id)
+        )
+        res = await self.db_session.execute(query)
+        update_user_row = res.fetchone()
+        if update_user_row is not None:
+            return update_user_row[0]

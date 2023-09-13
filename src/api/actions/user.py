@@ -47,6 +47,15 @@ class UserCRUD:
             return updated_user_id
 
     @staticmethod
+    async def change_user_password(email: str, password: str, session) -> UUID | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            updated_user_id = await user_dal.update_user_password(
+                email=email, hashed_password=Hasher.get_password_hash(password)
+            )
+            return updated_user_id
+
+    @staticmethod
     async def get_user_by_id(user_id, session) -> User | None:
         async with session.begin():
             user_dal = UserDAL(session)
@@ -68,3 +77,11 @@ class UserCRUD:
             user_dal = UserDAL(session)
             deleted_user_id = await user_dal.delete_user(user_id=user_id)
             return deleted_user_id
+
+    @staticmethod
+    async def get_user_by_email(email, session) -> User | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            user = await user_dal.get_user_by_email(email=email)
+            if user is not None:
+                return user
