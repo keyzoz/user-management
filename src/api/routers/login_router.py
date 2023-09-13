@@ -4,12 +4,14 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from src.api.actions.auth import (authenticate_user,
-                                  generate_reset_password_token,
-                                  send_reset_token)
+from src.api.actions.auth import authenticate_user
+from src.api.actions.token import (generate_reset_password_token,
+                                   get_reset_token, send_reset_token,
+                                   store_reset_token)
 from src.api.actions.user import UserCRUD
 from src.api.schemas import Token
 from src.db.database import get_db
+from src.db.redis_db import get_redis_client
 
 login_router = APIRouter()
 
@@ -36,7 +38,7 @@ async def login(
 
 
 @login_router.post("/refresh-token")
-def refresh(Authorize: AuthJWT = Depends()):
+def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
     try:
         Authorize.jwt_refresh_token_required()
     except Exception:
@@ -55,14 +57,16 @@ def refresh(Authorize: AuthJWT = Depends()):
     )
 
 
-@login_router.post("/restore-password")
-async def restore_password(email: str, session: AsyncSession = Depends(get_db)):
+@login_router.post("/sent-reset-link")
+async def sent_reset_link(
+    email: str, session: AsyncSession = Depends(get_db), redis=Depends(get_redis_client)
+):
     user = await UserCRUD.get_user_by_email(email, session)
     if user:
         try:
-            restore_token = generate_reset_password_token()
-            email_token[email] = restore_token
-            await send_reset_token(email, restore_token)
+            reset_token = generate_reset_password_token()
+            store_reset_token(redis, email, reset_token)
+            send_reset_token(email, reset_token)
 
             return {"message": "The token has been sent"}
         except Exception as e:
@@ -82,20 +86,17 @@ async def reset_password(
     new_password: str,
     confirm_password: str,
     session: AsyncSession = Depends(get_db),
+    redis=Depends(get_redis_client),
 ):
     try:
-        if (
-            email in email_token
-            and email_token[email] == token
-            and new_password == confirm_password
-        ):
+        store_token = get_reset_token(redis, email)
+        if store_token == token and new_password == confirm_password:
             updated_user = await UserCRUD.change_user_password(
                 email, new_password, session
             )
 
             if updated_user:
-                del email_token[email]
-
+                redis.delete(email)
                 return {"message": "password has been changed"}
             else:
                 return {"message": "error change"}
