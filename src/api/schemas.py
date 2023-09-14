@@ -1,11 +1,10 @@
-import re
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import HTTPException
 from pydantic import BaseModel, EmailStr, validator
 
-VALIDATE_USER_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
+from settings import SECRET_KEY
+from src.api import validators
 
 
 class TunedModel(BaseModel):
@@ -23,6 +22,18 @@ class UserCreate(TunedModel):
     password: str
     group_name: str
 
+    @validator("name")
+    def validate_name(cls, value):
+        return validators.validate_name(value)
+
+    @validator("surname")
+    def validate_surname(cls, value):
+        return validators.validate_surname(value)
+
+    @validator("phone_number")
+    def validate_phone_number(cls, value):
+        return validators.validate_phone_number(value)
+
 
 class UpdateUser(BaseModel):
     name: str | None = None
@@ -34,19 +45,15 @@ class UpdateUser(BaseModel):
 
     @validator("name")
     def validate_name(cls, value):
-        if not VALIDATE_USER_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422, detail="Name should contains only letters"
-            )
-        return value
+        return validators.validate_name(value)
 
     @validator("surname")
     def validate_surname(cls, value):
-        if not VALIDATE_USER_PATTERN.match(value):
-            raise HTTPException(
-                status_code=422, detail="Surname should contains only letters"
-            )
-        return value
+        return validators.validate_surname(value)
+
+    @validator("phone_number")
+    def validate_phone_number(cls, value):
+        return validators.validate_phone_number(value)
 
 
 class DeleteUserResponse(BaseModel):
@@ -73,4 +80,4 @@ class ShowUser(TunedModel):
 
 
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secret"
+    authjwt_secret_key: str = SECRET_KEY

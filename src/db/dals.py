@@ -1,10 +1,9 @@
-from typing import List, Tuple
 from uuid import UUID
 
 from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import Group, Roles, User
+from src.db.models import Roles, User
 
 
 class UserDAL:
