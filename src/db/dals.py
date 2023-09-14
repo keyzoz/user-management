@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from uuid import UUID
 
 from sqlalchemy import and_, delete, select, update
@@ -88,3 +89,32 @@ class UserDAL:
         update_user_row = res.fetchone()
         if update_user_row is not None:
             return update_user_row[0]
+
+    async def get_user_with_query_params(
+        self,
+        page: int = 1,
+        limit: int = 30,
+        filter_by_name: str = None,
+        sort_by: str = None,
+        order_by: str = "asc",
+        group_name: str = None,
+    ):
+        if filter_by_name:
+            query = select(User).where(User.name == filter_by_name)
+        else:
+            query = select(User)
+        if group_name:
+            query = query.where(User.group_name == group_name)
+        if sort_by:
+            order_clause = getattr(User, sort_by)
+
+            if order_by == "desc":
+                order_clause = order_clause.desc()
+            query = query.order_by(order_clause)
+
+        query = query.offset((page - 1) * limit).limit(limit)
+
+        res = await self.db_session.execute(query)
+        users = res.scalars().all()
+
+        return users

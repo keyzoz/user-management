@@ -5,17 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from src.api.actions.auth import authenticate_user
-from src.api.actions.token import (generate_reset_password_token,
+from src.api.actions.token import (generate_reset_password_token, get_jti,
                                    get_reset_token, send_reset_token,
-                                   store_reset_token, get_jti, store_jti)
+                                   store_jti, store_reset_token)
 from src.api.actions.user import UserCRUD
 from src.api.schemas import Token
 from src.db.database import get_db
 from src.db.redis_db import get_redis_client
 
 login_router = APIRouter()
-
-email_token = {}
 
 
 @login_router.post("/token", response_model=Token)
@@ -47,13 +45,13 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
             detail="Invalid Token/ Refresh Token Required",
         )
     current_user = Authorize.get_jwt_subject()
-    jti_of_token = Authorize.get_raw_jwt().get('jti')
+    jti_of_token = Authorize.get_raw_jwt().get("jti")
     try:
         store_token = get_jti(redis, username=current_user)
     except Exception as e:
         return {"error": f"error: {str(e)}"}
     print(store_token)
-    if store_token.decode('utf-8') == jti_of_token:
+    if store_token.decode("utf-8") == jti_of_token:
         raise HTTPException(
             status_code=422,
             detail="Old Token",

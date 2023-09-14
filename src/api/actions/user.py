@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from uuid import UUID
 
 from src.api.schemas import ShowUser, UserCreate
@@ -85,3 +86,25 @@ class UserCRUD:
             user = await user_dal.get_user_by_email(email=email)
             if user is not None:
                 return user
+
+    @staticmethod
+    async def get_users_by_query_params(
+        page: int,
+        limit: int,
+        filter_by_name: str,
+        sort_by: str,
+        order_by: str,
+        group_name: str,
+        session,
+    ):
+        async with session.begin():
+            user_dal = UserDAL(session)
+            users = await user_dal.get_user_with_query_params(
+                page=page,
+                limit=limit,
+                filter_by_name=filter_by_name,
+                sort_by=sort_by,
+                order_by=order_by,
+                group_name=group_name,
+            )
+            return users

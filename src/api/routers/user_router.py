@@ -35,7 +35,7 @@ async def update_current_user(
 ) -> ShowUser:
     try:
         Authorize.jwt_required()
-    except:
+    except Exception:
         raise HTTPException(status_code=498, detail="Invalid Token")
     updated_user_params = body.dict(exclude_none=True)
     cur_user_username = Authorize.get_jwt_subject()
@@ -66,7 +66,7 @@ async def get_current_user(
 ) -> ShowUser:
     try:
         Authorize.jwt_required()
-    except:
+    except Exception:
         raise HTTPException(status_code=498, detail="Invalid Token")
     cur_user_username = Authorize.get_jwt_subject()
     if cur_user_username is None:
@@ -82,7 +82,7 @@ async def delete_current_user(
 ) -> DeleteUserResponse:
     try:
         Authorize.jwt_required()
-    except:
+    except Exception:
         raise HTTPException(status_code=498, detail="Invalid Token")
     cur_user_username = Authorize.get_jwt_subject()
     if cur_user_username is None:
@@ -101,7 +101,7 @@ async def update_user_by_id(
 ) -> ShowUser:
     try:
         Authorize.jwt_required()
-    except:
+    except Exception:
         raise HTTPException(status_code=498, detail="Invalid Token")
     updated_user_params = body.dict(exclude_none=True)
     if updated_user_params == {}:
@@ -136,7 +136,7 @@ async def get_user_by_id(
 ) -> ShowUser:
     try:
         Authorize.jwt_required()
-    except:
+    except Exception:
         raise HTTPException(status_code=498, detail="Invalid Token")
     user = await UserCRUD.get_user_by_id(user_id, session)
     cur_user = await UserCRUD.get_user_by_username(Authorize.get_jwt_subject(), session)
