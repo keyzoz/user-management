@@ -79,5 +79,10 @@ class ShowUser(TunedModel):
     updated_at: datetime | None
 
 
+class HealthCheckResponse(BaseModel):
+    status_code: int
+    detail: str
+
+
 class Settings(BaseModel):
     authjwt_secret_key: str = SECRET_KEY
