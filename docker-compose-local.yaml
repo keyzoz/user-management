@@ -1,40 +1,69 @@
-version: ${VERSION}
+version: "3.8"
 services:
-  db:
-    image: ${IMAGE_NAME}
+  api:
+    build: .
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/user_management_service/app
+    env_file:
+      - .env
+    environment:
+      - API_ENVIRONMENT=local
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
     restart: always
     environment:
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_DB={DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - ${DB_PORTS}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - custom
     env_file:
       - .env
-  db_test:
-    image: ${IMAGE_NAME}
+
+
+  postgres-test:
+    image: postgres:15
     restart: always
     environment:
-      - POSTGRES_DB=${DB_TEST_NAME}
+      - POSTGRES_DB={DB_TEST_NAME}
       - POSTGRES_USER=${DB_TEST_USER}
       - POSTGRES_PASSWORD=${DB_TEST_PASSWORD}
     ports:
       - ${DB_TEST_PORTS}
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
     networks:
       - custom
-  app:
-    build:
-      context: .
-      target: builder
-    container_name: fastapi-application
-    environment:
-      PORT: 8000
+    env_file:
+      - .env
+
+  redis:
+    image: redis:latest
+    command: redis-server
+    volumes:
+      - redis-data:/var/lib/redis/data
     ports:
-      - '8000:8000'
-    restart: "no"
+      - "6379:6379"
+
+
+volumes:
+    postgres-data:
+    postgres-test-data:
+    redis-data:
+
 
 networks:
   custom:
     driver: bridge
+

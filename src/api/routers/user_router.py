@@ -3,7 +3,7 @@ from logging import getLogger
 from uuid import UUID
 
 import aioboto3
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

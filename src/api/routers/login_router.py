@@ -108,6 +108,7 @@ async def reset_password(
     try:
         reset_token_service = ResetTokenService()
         reset_token_service.redis_storage = redis
+
         store_token = reset_token_service.get_reset_token(email)
         if store_token == token and new_password == confirm_password:
             updated_user = await UserCRUD.change_user_password(
