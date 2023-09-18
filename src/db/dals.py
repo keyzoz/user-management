@@ -89,6 +89,18 @@ class UserDAL:
         if update_user_row is not None:
             return update_user_row[0]
 
+    async def update_user_photo(self, username: str, image_s3: str) -> User | None:
+        query = (
+            update(User)
+            .where(and_(User.username == username, User.is_blocked == False))
+            .values(image_s3=image_s3)
+            .returning(User)
+        )
+        res = await self.db_session.execute(query)
+        update_user_row = res.fetchone()
+        if update_user_row is not None:
+            return update_user_row[0]
+
     async def get_user_with_query_params(
         self,
         page: int = 1,

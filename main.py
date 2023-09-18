@@ -11,6 +11,7 @@ app = FastAPI(title="user_managment")
 
 main_api_router = APIRouter()
 
+
 main_api_router.include_router(login_router, prefix="/auth", tags=["tags"])
 main_api_router.include_router(user_router, prefix="/user", tags=["tags"])
 main_api_router.include_router(users_router, prefix="", tags=["tags"])

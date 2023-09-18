@@ -57,6 +57,15 @@ class UserCRUD:
             return updated_user_id
 
     @staticmethod
+    async def update_user_photo(username: str, image_s3: str, session) -> User | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            updated_user = await user_dal.update_user_photo(
+                username=username, image_s3=image_s3
+            )
+            return updated_user
+
+    @staticmethod
     async def get_user_by_id(user_id, session) -> User | None:
         async with session.begin():
             user_dal = UserDAL(session)

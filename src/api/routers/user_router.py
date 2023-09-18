@@ -1,11 +1,14 @@
+import io
 from logging import getLogger
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+import aioboto3
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from settings import localstack_endpoint_url
 from src.api.actions.user import UserCRUD
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
@@ -147,3 +150,40 @@ async def get_user_by_id(
             status_code=404, detail=f"User with id {user_id} not found."
         )
     return user
+
+
+@user_router.post("/upload-photo")
+async def upload_photo(
+    file: UploadFile,
+    Authorize: AuthJWT = Depends(),
+    session: AsyncSession = Depends(get_db),
+) -> ShowUser | dict:
+    try:
+        Authorize.jwt_required()
+    except Exception:
+        raise HTTPException(status_code=498, detail="Invalid Token")
+    aws_session = aioboto3.Session()
+    async with aws_session.client(
+        "s3", region_name="us-east-1", endpoint_url=localstack_endpoint_url
+    ) as s3:
+        try:
+            if not file.filename.endswith((".jpg", ".jpeg", ".png")):
+                raise HTTPException(
+                    status_code=400, detail="The File must be in JPG or PNG format"
+                )
+            file_contents = await file.read()
+            s3_object_key = f"images/{file.filename}"
+
+            await s3.upload_fileobj(
+                Fileobj=io.BytesIO(file_contents),
+                Bucket="sample-bucket",
+                Key=s3_object_key,
+            )
+
+            updated_user = await UserCRUD.update_user_photo(
+                Authorize.get_jwt_subject(), s3_object_key, session
+            )
+            return updated_user
+        except Exception as err:
+            logger.error(err)
+            raise HTTPException(status_code=503, detail=f"AWS S3 Error")

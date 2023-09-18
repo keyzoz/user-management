@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
@@ -5,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from src.api.actions.auth import authenticate_user
-from src.api.actions.token import (generate_reset_password_token, get_jti,
-                                   get_reset_token, send_reset_token,
-                                   store_jti, store_reset_token)
+from src.api.actions.token import ResetTokenService
 from src.api.actions.user import UserCRUD
 from src.api.schemas import Token
 from src.db.database import get_db
 from src.db.redis_db import get_redis_client
+
+logger = getLogger(__name__)
+
 
 login_router = APIRouter()
 
@@ -47,7 +50,7 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
     current_user = Authorize.get_jwt_subject()
     jti_of_token = Authorize.get_raw_jwt().get("jti")
     try:
-        store_token = get_jti(redis, username=current_user)
+        store_token = ResetTokenService.get_jti(redis, username=current_user)
     except Exception as e:
         return {"error": f"error: {str(e)}"}
     print(store_token)
@@ -57,7 +60,7 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
             detail="Old Token",
         )
 
-    store_jti(redis, current_user, jti_of_token)
+    ResetTokenService.store_jti(redis, current_user, jti_of_token)
     new_access_token = Authorize.create_access_token(subject=current_user)
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
@@ -74,13 +77,17 @@ async def sent_reset_link(
     user = await UserCRUD.get_user_by_email(email, session)
     if user:
         try:
-            reset_token = generate_reset_password_token()
-            store_reset_token(redis, email, reset_token)
-            send_reset_token(email, reset_token)
+            reset_token_service = ResetTokenService()
+            reset_token_service.redis_storage = redis
 
+            reset_token_service.generate_and_send_reset_token(email)
             return {"message": "The token has been sent"}
         except Exception as e:
-            return {"error": f"Error: {str(e)}"}
+            logger.error(e)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database error {str(e)}",
+            )
 
     else:
         raise HTTPException(
@@ -99,18 +106,24 @@ async def reset_password(
     redis=Depends(get_redis_client),
 ):
     try:
-        store_token = get_reset_token(redis, email)
+        reset_token_service = ResetTokenService()
+        reset_token_service.redis_storage = redis
+        store_token = reset_token_service.get_reset_token(email)
         if store_token == token and new_password == confirm_password:
             updated_user = await UserCRUD.change_user_password(
                 email, new_password, session
             )
 
             if updated_user:
-                redis.delete(email)
-                return {"message": "password has been changed"}
+                reset_token_service.delete_token(email)
+                return {"message": "Password has been changed"}
             else:
-                return {"message": "error change"}
+                return {"message": "Change password failed"}
         else:
-            return {"message": "error"}
+            return {"message": "Invalid token or password"}
     except Exception as e:
-        return {"error": f"error {str(e)}"}
+        logger.error(e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database connection error! {str(e)}",
+        )
