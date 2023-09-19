@@ -32,22 +32,6 @@ services:
       - .env
 
 
-  postgres-test:
-    image: postgres:15
-    restart: always
-    environment:
-      - POSTGRES_DB={DB_TEST_NAME}
-      - POSTGRES_USER=${DB_TEST_USER}
-      - POSTGRES_PASSWORD=${DB_TEST_PASSWORD}
-    ports:
-      - ${DB_TEST_PORTS}
-    volumes:
-      - postgres-test-data:/var/lib/postgresql/data
-    networks:
-      - custom
-    env_file:
-      - .env
-
   redis:
     image: redis:latest
     command: redis-server
