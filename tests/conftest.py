@@ -54,19 +54,6 @@ async def ac() -> AsyncGenerator[AsyncSession, None]:
         yield ac
 
 
-@pytest.fixture
-async def mock_s3_client():
-
-    s3_client_mock = AsyncMock()
-
-    session_mock = AsyncMock()
-    session_mock.create_client.return_value = s3_client_mock
-
-    with patch("aioboto3.session") as aio_session_mock:
-        aio_session_mock.return_value = session_mock
-        yield s3_client_mock
-
-
 @pytest.fixture(scope="function")
 def generate_group_name():
 
