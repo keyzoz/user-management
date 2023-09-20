@@ -1,7 +1,11 @@
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict
+from unittest.mock import AsyncMock, patch
 
+import aioboto3
 import pytest
+from aioboto3 import Session
+from aiobotocore.config import AioConfig
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
