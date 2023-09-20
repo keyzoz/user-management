@@ -1,12 +1,23 @@
 from fastapi import status
 from httpx import AsyncClient
 
+from tests.crud import create_group_data, create_user_data
 
-async def test_get_user_by_id(ac: AsyncClient):
+
+async def test_get_user_by_id(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    password = generate_random_user_data[0]
+    user_data = generate_random_user_data[1]
+    group_name = generate_group_name["group_name"]
+    await create_group_data(group_name=group_name)
+    user_data["group_name"] = group_name
+    user_data["role"] = "ADMIN"
+    await create_user_data(user_data)
 
     user_for_login = {
-        "username": "monarch",
-        "password": "admin",
+        "username": user_data["username"],
+        "password": password,
     }
 
     login = await ac.post("/auth/token", data=user_for_login)
@@ -16,27 +27,36 @@ async def test_get_user_by_id(ac: AsyncClient):
     assert login.status_code == status.HTTP_200_OK
 
     resp = await ac.get(
-        "/user/c43df4fa-7131-40ad-9277-339de8303542",
+        "/user/{}".format(user_data["user_id"]),
         headers={"Authorization": "Bearer {}".format(data_from_login["access_token"])},
     )
 
     data_from_resp = resp.json()
 
     assert resp.status_code == status.HTTP_200_OK
-    assert data_from_resp["name"] == "Dmitriy"
-    assert data_from_resp["surname"] == "Slav"
-    assert data_from_resp["username"] == "dslav"
-    assert data_from_resp["phone_number"] == "+37431314534"
-    assert data_from_resp["email"] == "dmslav@example.com"
-    assert data_from_resp["image_s3"] == "path/img2"
-    assert data_from_resp["group_name"] == "Pandas"
+    assert data_from_resp["name"] == user_data["name"]
+    assert data_from_resp["surname"] == user_data["surname"]
+    assert data_from_resp["username"] == user_data["username"]
+    assert data_from_resp["phone_number"] == user_data["phone_number"]
+    assert data_from_resp["email"] == user_data["email"]
+    assert data_from_resp["image_s3"] == user_data["image_s3"]
+    assert data_from_resp["group_name"] == user_data["group_name"]
 
 
-async def test_patch_user_by_id(ac: AsyncClient):
+async def test_patch_user_by_id(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    password = generate_random_user_data[0]
+    user_data = generate_random_user_data[1]
+    group_name = generate_group_name["group_name"]
+    await create_group_data(group_name=group_name)
+    user_data["group_name"] = group_name
+    user_data["role"] = "ADMIN"
+    await create_user_data(user_data)
 
     user_for_login = {
-        "username": "monarch",
-        "password": "admin",
+        "username": user_data["username"],
+        "password": password,
     }
 
     data_for_patch = {
@@ -52,7 +72,7 @@ async def test_patch_user_by_id(ac: AsyncClient):
 
     headers = {"Authorization": "Bearer {}".format(data_from_login["access_token"])}
     resp = await ac.patch(
-        "/user/c43df4fa-7131-40ad-9277-339de8303542",
+        "/user/{}".format(user_data["user_id"]),
         json=data_for_patch,
         headers=headers,
     )
@@ -60,10 +80,10 @@ async def test_patch_user_by_id(ac: AsyncClient):
     data_from_resp = resp.json()
 
     assert resp.status_code == status.HTTP_200_OK
-    assert data_from_resp["name"] == "Dmitriy"
+    assert data_from_resp["name"] == user_data["name"]
     assert data_from_resp["surname"] == data_for_patch["surname"]
-    assert data_from_resp["username"] == "dslav"
+    assert data_from_resp["username"] == user_data["username"]
     assert data_from_resp["phone_number"] == data_for_patch["phone_number"]
     assert data_from_resp["email"] == data_for_patch["email"]
-    assert data_from_resp["image_s3"] == "path/img2"
-    assert data_from_resp["group_name"] == "Pandas"
+    assert data_from_resp["image_s3"] == user_data["image_s3"]
+    assert data_from_resp["group_name"] == user_data["group_name"]

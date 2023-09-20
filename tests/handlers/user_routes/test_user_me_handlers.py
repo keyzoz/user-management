@@ -1,12 +1,23 @@
 from fastapi import status
 from httpx import AsyncClient
 
+from tests.crud import create_group_data, create_user_data
 
-async def test_get_user_me(ac: AsyncClient):
+
+async def test_get_user_me(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    password = generate_random_user_data[0]
+    user_data = generate_random_user_data[1]
+    group_name = generate_group_name["group_name"]
+    await create_group_data(group_name=group_name)
+    user_data["group_name"] = group_name
+    user_data["role"] = "USER"
+    await create_user_data(user_data)
 
     user_for_login = {
-        "username": "alexlost21",
-        "password": "string",
+        "username": user_data["username"],
+        "password": password,
     }
 
     login = await ac.post("/auth/token", data=user_for_login)
@@ -26,23 +37,22 @@ async def test_get_user_me(ac: AsyncClient):
     assert data_from_resp["username"] == user_for_login["username"]
 
 
-async def test_patch_user_me(ac: AsyncClient):
-
-    user_data = {
-        "name": "Alex",
-        "surname": "Lost",
-        "username": "alexlost21",
-        "phone_number": "+79525024142",
-        "email": "alex21@example.com",
-        "image_s3": "string",
-        "password": "string",
-        "group_name": "Pandas",
-    }
+async def test_patch_user_me(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    password = generate_random_user_data[0]
+    user_data = generate_random_user_data[1]
+    group_name = generate_group_name["group_name"]
+    await create_group_data(group_name=group_name)
+    user_data["group_name"] = group_name
+    user_data["role"] = "USER"
+    await create_user_data(user_data)
 
     user_for_login = {
-        "username": "alexlost21",
-        "password": "string",
+        "username": user_data["username"],
+        "password": password,
     }
+
     data_for_patch = {"surname": "Malkov", "phone_number": "+375291047592"}
     login = await ac.post("/auth/token", data=user_for_login)
 
@@ -70,10 +80,20 @@ async def test_patch_user_me(ac: AsyncClient):
     assert data_from_resp["group_name"] == user_data["group_name"]
 
 
-async def test_delete_user_me(ac: AsyncClient):
+async def test_delete_user_me(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    password = generate_random_user_data[0]
+    user_data = generate_random_user_data[1]
+    group_name = generate_group_name["group_name"]
+    await create_group_data(group_name=group_name)
+    user_data["group_name"] = group_name
+    user_data["role"] = "USER"
+    await create_user_data(user_data)
+
     user_for_login = {
-        "username": "vic",
-        "password": "admin",
+        "username": user_data["username"],
+        "password": password,
     }
 
     login = await ac.post("/auth/token", data=user_for_login)
@@ -92,4 +112,4 @@ async def test_delete_user_me(ac: AsyncClient):
     )
 
     assert resp.status_code == status.HTTP_200_OK
-    assert resp.json() == {"deleted_user_id": "e23df4fa-7331-40cd-9277-339de8303542"}
+    assert resp.json() == {"deleted_user_id": user_data["user_id"]}

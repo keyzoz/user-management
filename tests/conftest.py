@@ -1,11 +1,10 @@
 import asyncio
-from typing import AsyncGenerator, Dict
+import random
+from typing import AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
-import aioboto3
 import pytest
-from aioboto3 import Session
-from aiobotocore.config import AioConfig
+from faker import Faker
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -14,6 +13,9 @@ import settings
 from main import app
 from src.db.database import get_db
 from src.db.models import base
+from src.hashing import Hasher
+
+fake = Faker()
 
 engine_test = create_async_engine(settings.TEST_DATABASE_URL, pool_pre_ping=True)
 async_session_maker = sessionmaker(
@@ -50,3 +52,58 @@ async def prepare_db():
 async def ac() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture
+async def mock_s3_client():
+
+    s3_client_mock = AsyncMock()
+
+    session_mock = AsyncMock()
+    session_mock.create_client.return_value = s3_client_mock
+
+    with patch("aioboto3.session") as aio_session_mock:
+        aio_session_mock.return_value = session_mock
+        yield s3_client_mock
+
+
+@pytest.fixture(scope="function")
+def generate_group_name():
+
+    group_data = {"group_name": fake.word()}
+
+    return group_data
+
+
+@pytest.fixture(scope="function")
+def generate_data_for_signup():
+
+    user_data = {
+        "name": fake.first_name(),
+        "surname": fake.last_name(),
+        "username": fake.user_name(),
+        "phone_number": str(random.randint(0, 100000000)),
+        "email": fake.email(),
+        "image_s3": fake.url(),
+        "password": fake.password(),
+    }
+
+    return user_data
+
+
+@pytest.fixture(scope="function")
+def generate_random_user_data():
+
+    password = fake.password()
+    user_data = {
+        "user_id": str(fake.uuid4()),
+        "name": fake.first_name(),
+        "surname": fake.last_name(),
+        "username": fake.user_name(),
+        "phone_number": fake.phone_number(),
+        "email": fake.email(),
+        "image_s3": fake.url(),
+        "hashed_password": Hasher.get_password_hash(password),
+    }
+
+    return password, user_data

@@ -66,6 +66,7 @@ uvicorn = "==0.20.0"
 virtualenv = "==20.24.5"
 wrapt = "==1.15.0"
 yarl = "==1.9.2"
+faker = "*"
 
 [dev-packages]
 
