@@ -4,7 +4,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-REAL_DATABASE_URL = os.getenv("REAL_DATABASE_URL")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+
+
+REAL_DATABASE_URL = (
+    f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/"
+    f"{POSTGRES_DB}"
+)
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 REDIS_DB_URL = os.getenv("REDIS_DB_URL")
 

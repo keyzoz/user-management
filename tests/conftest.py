@@ -1,7 +1,6 @@
 import asyncio
 import random
 from typing import AsyncGenerator
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from faker import Faker
