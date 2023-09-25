@@ -16,7 +16,7 @@ from src.hashing import Hasher
 
 fake = Faker()
 
-engine_test = create_async_engine(settings.TEST_DATABASE_URL, pool_pre_ping=True)
+engine_test = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
 async_session_maker = sessionmaker(
     engine_test, class_=AsyncSession, expire_on_commit=False
 )
@@ -53,10 +53,9 @@ async def ac() -> AsyncGenerator[AsyncSession, None]:
         yield ac
 
 
-@pytest.fixture(scope="function")
 def generate_group_name():
 
-    group_data = {"group_name": fake.word()}
+    group_data = fake.word()
 
     return group_data
 
@@ -77,7 +76,6 @@ def generate_data_for_signup():
     return user_data
 
 
-@pytest.fixture(scope="function")
 def generate_random_user_data():
 
     password = fake.password()

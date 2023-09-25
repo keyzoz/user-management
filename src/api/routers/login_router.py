@@ -76,18 +76,17 @@ async def sent_reset_link(
 ):
     user = await UserCRUD.get_user_by_email(email, session)
     if user:
+        reset_token_service = ResetTokenService()
+        reset_token_service.redis_storage = redis
         try:
-            reset_token_service = ResetTokenService()
-            reset_token_service.redis_storage = redis
-
             reset_token_service.generate_and_send_reset_token(email)
-            return {"message": "The token has been sent"}
         except Exception as e:
             logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail=f"Database error {str(e)}",
             )
+        return {"message": "The token has been sent"}
 
     else:
         raise HTTPException(

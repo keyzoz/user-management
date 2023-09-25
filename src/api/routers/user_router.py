@@ -13,7 +13,7 @@ from src.api.actions.user import UserCRUD
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
 from src.db.database import get_db
-from src.permissons import (is_admin_or_moderator_of_target_group,
+from src.permissons import (is_admin, is_admin_or_moderator_of_target_group,
                             is_moderator_of_target_group_or_admin)
 
 logger = getLogger(__name__)
@@ -115,7 +115,7 @@ async def update_user_by_id(
 
     user = await UserCRUD.get_user_by_id(user_id, session)
     cur_user = await UserCRUD.get_user_by_username(Authorize.get_jwt_subject(), session)
-    if not is_moderator_of_target_group_or_admin(cur_user, user):
+    if not is_admin(cur_user):
         raise HTTPException(status_code=403, detail="Forbidden")
     if user is None:
         raise HTTPException(

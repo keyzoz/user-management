@@ -67,6 +67,7 @@ virtualenv = "==20.24.5"
 wrapt = "==1.15.0"
 yarl = "==1.9.2"
 faker = "*"
+httpx = "*"
 
 [dev-packages]
 
