@@ -49,18 +49,19 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
         )
     current_user = Authorize.get_jwt_subject()
     jti_of_token = Authorize.get_raw_jwt().get("jti")
+    reset_token_service = ResetTokenService()
+    reset_token_service.redis_storage = redis
     try:
-        store_token = ResetTokenService.get_jti(redis, username=current_user)
+        store_token = reset_token_service.get_jti(username=current_user)
     except Exception as e:
         return {"error": f"error: {str(e)}"}
-    print(store_token)
-    if store_token.decode("utf-8") == jti_of_token:
+    if store_token is not None:
         raise HTTPException(
             status_code=422,
-            detail="Old Token",
+            detail="Old/Invalid Token",
         )
 
-    ResetTokenService.store_jti(redis, current_user, jti_of_token)
+    reset_token_service.store_jti(current_user, jti_of_token)
     new_access_token = Authorize.create_access_token(subject=current_user)
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
