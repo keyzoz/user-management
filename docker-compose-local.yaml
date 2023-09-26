@@ -13,6 +13,8 @@ services:
       - API_ENVIRONMENT=local
     depends_on:
       - postgres
+      - postgres-test
+      - localstack
       - redis
 
   postgres:
@@ -43,10 +45,9 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - postgres-test-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     env_file:
       - .env
-
 
   redis:
     image: redis:latest
@@ -56,8 +57,14 @@ services:
     ports:
       - "6379:6379"
 
+  localstack:
+    image: localstack/localstack
+    command: [ "sh", "-c", "localstack start && awslocal ses verify-email-identity --email-address user1@yourdomain.com" ]
+    ports:
+      - '4566:4566'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
 
 volumes:
     postgres-data:
-    postgres-test-data:
     redis-data:

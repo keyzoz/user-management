@@ -3,7 +3,7 @@ import string
 
 import boto3
 
-from settings import AWS_EMAIL_SENDER, localstack_endpoint_url
+from settings import AWS_EMAIL_SENDER, LOCALSTACK_ENDPOINT_URL
 from src.db.redis_db import get_redis_client
 
 
@@ -31,7 +31,7 @@ class ResetTokenService:
         ses_client = boto3.client(
             "ses",
             region_name="us-east-1",
-            endpoint_url=localstack_endpoint_url,
+            endpoint_url=LOCALSTACK_ENDPOINT_URL,
         )
 
         subject = "Reset Password"

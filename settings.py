@@ -35,7 +35,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
 AWS_EMAIL_SENDER = os.getenv("AWS_EMAIL_SENDER")
+SES_BUCKET_NAME = os.getenv("SES_BUCKET_NAME")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-localstack_endpoint_url = os.getenv("localstack_endpoint_url")
+LOCALSTACK_ENDPOINT_URL = os.getenv("LOCALSTACK_ENDPOINT_URL")

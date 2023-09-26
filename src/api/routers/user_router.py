@@ -8,7 +8,8 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from settings import localstack_endpoint_url
+import settings
+from settings import LOCALSTACK_ENDPOINT_URL
 from src.api.actions.user import UserCRUD
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
@@ -164,7 +165,7 @@ async def upload_photo(
         raise HTTPException(status_code=498, detail="Invalid Token")
     aws_session = aioboto3.Session()
     async with aws_session.client(
-        "s3", region_name="us-east-1", endpoint_url=localstack_endpoint_url
+        "s3", region_name="us-east-1", endpoint_url=LOCALSTACK_ENDPOINT_URL
     ) as s3:
         try:
             if not file.filename.endswith((".jpg", ".jpeg", ".png")):
@@ -176,7 +177,7 @@ async def upload_photo(
 
             await s3.upload_fileobj(
                 Fileobj=io.BytesIO(file_contents),
-                Bucket="sample-bucket",
+                Bucket=settings.SES_BUCKET_NAME,
                 Key=s3_object_key,
             )
 
