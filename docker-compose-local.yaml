@@ -27,9 +27,7 @@ services:
       - PGHOST=${POSTGRES_HOST}
       - PGPORT=${POSTGRES_PORT}
     ports:
-      - "5433:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - "5434:5432"
     env_file:
       - .env
 
@@ -43,28 +41,22 @@ services:
       - PGHOST=${POSTGRES_TEST_HOST}
       - PGPORT=${POSTGRES_TEST_PORT}
     ports:
-      - "5434:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - "5433:5432"
     env_file:
       - .env
 
   redis:
     image: redis:latest
     command: redis-server
-    volumes:
-      - redis-data:/var/lib/redis/data
+
     ports:
       - "6379:6379"
 
   localstack:
     image: localstack/localstack
-    command: [ "sh", "-c", "localstack start && awslocal ses verify-email-identity --email-address user1@yourdomain.com" ]
+    command: localstack start
     ports:
       - '4566:4566'
-    volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
 
-volumes:
-    postgres-data:
-    redis-data:
+
+

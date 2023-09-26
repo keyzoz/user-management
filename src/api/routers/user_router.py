@@ -180,10 +180,13 @@ async def upload_photo(
                 Bucket=settings.SES_BUCKET_NAME,
                 Key=s3_object_key,
             )
-
-            updated_user = await UserCRUD.update_user_photo(
-                Authorize.get_jwt_subject(), s3_object_key, session
-            )
+            try:
+                updated_user = await UserCRUD.update_user_photo(
+                    Authorize.get_jwt_subject(), s3_object_key, session
+                )
+            except Exception as err:
+                logger.error(err)
+                raise HTTPException(status_code=503, detail=f"dfsfsdfdsf")
             return updated_user
         except Exception as err:
             logger.error(err)

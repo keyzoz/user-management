@@ -24,13 +24,12 @@ async def test_upload_photo(ac: AsyncClient):
     login = await ac.post("/auth/token", data=user_for_login)
 
     data_from_login = login.json()
-    fake_file = UploadFile(io.BytesIO(b"fsdfsdfsdfsdfsdf"))
-    file_content = fake_file.file.read()
+
     assert login.status_code == status.HTTP_200_OK
 
     resp_d = await ac.post(
         "/user/upload-photo",
-        data={"file": file_content},
+        files={"file": open("tests/handlers/aws_services/img.png", "rb")},
         headers={
             "Authorization": "Bearer {}".format(
                 data_from_login["access_token"],
@@ -38,4 +37,7 @@ async def test_upload_photo(ac: AsyncClient):
         },
     )
 
-    assert resp_d.json() == {"message": "Tdsfsdf"}
+    data_from_update = resp_d.json()
+    assert resp_d.status_code == 200
+    assert data_from_update["username"] == user_data["username"]
+    assert data_from_update["image_s3"] is not None
