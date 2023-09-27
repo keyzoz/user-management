@@ -1,17 +1,17 @@
 from fastapi import status
 from httpx import AsyncClient
 
-from tests.conftest import generate_group_name, generate_random_user_data
 from tests.crud import create_user_and_group_data
 
 
-async def test_get_user_with_user_role(ac: AsyncClient):
-    data = generate_random_user_data()
+async def test_get_user_with_user_role(
+    ac: AsyncClient, generate_random_user_data, generate_group_name
+):
+    data = generate_random_user_data
     password = data[0]
     user_data = data[1]
-    group_name = generate_group_name()
+    group_name = generate_group_name
     user_data["group_name"] = group_name
-    user_data["role"] = "USER"
     await create_user_and_group_data(group_name=group_name, user_data=user_data)
 
     user_for_login = {
@@ -34,12 +34,12 @@ async def test_get_user_with_user_role(ac: AsyncClient):
 
 
 async def test_patch_user_with_user_role(
-    ac: AsyncClient,
+    ac: AsyncClient, generate_random_user_data, generate_group_name
 ):
-    data = generate_random_user_data()
+    data = generate_random_user_data
     password = data[0]
     user_data = data[1]
-    group_name = generate_group_name()
+    group_name = generate_group_name
     user_data["group_name"] = group_name
     user_data["role"] = "USER"
     await create_user_and_group_data(group_name=group_name, user_data=user_data)
@@ -71,14 +71,13 @@ async def test_patch_user_with_user_role(
 
 
 async def test_patch_user_with_moderator_role(
-    ac: AsyncClient,
+    ac: AsyncClient, generate_random_moderator_data, generate_group_name
 ):
-    data = generate_random_user_data()
+    data = generate_random_moderator_data
     password = data[0]
     user_data = data[1]
-    group_name = generate_group_name()
+    group_name = generate_group_name
     user_data["group_name"] = group_name
-    user_data["role"] = "MODERATOR"
     await create_user_and_group_data(group_name=group_name, user_data=user_data)
 
     user_for_login = {

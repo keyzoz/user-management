@@ -9,13 +9,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import settings
-from settings import LOCALSTACK_ENDPOINT_URL
+from settings import AWS_REGION, LOCALSTACK_ENDPOINT_URL
 from src.api.actions.user import UserCRUD
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
 from src.db.database import get_db
-from src.permissons import (is_admin, is_admin_or_moderator_of_target_group,
-                            is_moderator_of_target_group_or_admin)
+from src.permissons import is_admin, is_admin_or_moderator_of_target_group
 
 logger = getLogger(__name__)
 
@@ -165,7 +164,7 @@ async def upload_photo(
         raise HTTPException(status_code=498, detail="Invalid Token")
     aws_session = aioboto3.Session()
     async with aws_session.client(
-        "s3", region_name="us-east-1", endpoint_url=LOCALSTACK_ENDPOINT_URL
+        "s3", region_name=AWS_REGION, endpoint_url=LOCALSTACK_ENDPOINT_URL
     ) as s3:
         try:
             if not file.filename.endswith((".jpg", ".jpeg", ".png")):

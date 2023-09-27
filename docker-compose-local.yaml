@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/user_management_service/app
+      - app:/user_management_service/app
     env_file:
       - .env
     environment:
@@ -27,7 +27,7 @@ services:
       - PGHOST=${POSTGRES_HOST}
       - PGPORT=${POSTGRES_PORT}
     ports:
-      - "5434:5432"
+      - "5434:5433"
     env_file:
       - .env
 
@@ -41,7 +41,7 @@ services:
       - PGHOST=${POSTGRES_TEST_HOST}
       - PGPORT=${POSTGRES_TEST_PORT}
     ports:
-      - "5433:5432"
+      - "5435:5434"
     env_file:
       - .env
 
@@ -58,5 +58,7 @@ services:
     ports:
       - '4566:4566'
 
+volumes:
+  app:
 
 
