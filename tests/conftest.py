@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 import aioboto3
 import boto3
 import pytest
+import redis
 from faker import Faker
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -53,6 +54,15 @@ async def prepare_db():
 async def ac() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture(scope="session")
+async def redis_client():
+    db = redis.StrictRedis.from_url(settings.REDIS_DB_URL)
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @pytest.fixture(scope="function")

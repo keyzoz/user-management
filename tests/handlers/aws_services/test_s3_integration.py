@@ -27,7 +27,7 @@ async def test_upload_photo(
 
     resp_d = await ac.post(
         "/user/upload-photo",
-        files={"file": open("img.png", "rb")},
+        files={"file": open("tests/img.png", "rb")},
         headers={
             "Authorization": "Bearer {}".format(
                 data_from_login["access_token"],
