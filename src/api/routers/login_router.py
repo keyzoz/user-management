@@ -31,7 +31,9 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    access_token = Authorize.create_access_token(subject=user.username)
+    access_token = Authorize.create_access_token(
+        subject=user.username, user_claims={"role": user.role, "group": user.group_name}
+    )
     refresh_token = Authorize.create_refresh_token(subject=user.username)
     return Token(
         access_token=access_token, refresh_token=refresh_token, token_type="Bearer"
@@ -39,7 +41,11 @@ async def login(
 
 
 @login_router.post("/refresh-token")
-def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
+def refresh(
+    Authorize: AuthJWT = Depends(),
+    redis=Depends(get_redis_client),
+    session: AsyncSession = Depends(get_db),
+):
     try:
         Authorize.jwt_refresh_token_required()
     except Exception:
@@ -62,7 +68,10 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
         )
 
     reset_token_service.store_jti(current_user, jti_of_token)
-    new_access_token = Authorize.create_access_token(subject=current_user)
+    user = await UserCRUD.get_user_by_username(username=current_user, session=session)
+    new_access_token = Authorize.create_access_token(
+        subject=current_user, user_claims={"role": user.role, "group": user.group_name}
+    )
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
         access_token=new_access_token,
