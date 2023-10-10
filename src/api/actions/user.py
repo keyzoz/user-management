@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from uuid import UUID
 
 from src.api.schemas import ShowUser, UserCreate
@@ -18,7 +19,6 @@ class UserCRUD:
                 phone_number=body.phone_number,
                 group_name=body.group_name,
                 email=body.email,
-                image_s3=body.image_s3,
                 hashed_password=Hasher.get_password_hash(body.password),
                 role=Roles.USER_USER,
             )
@@ -47,6 +47,24 @@ class UserCRUD:
             return updated_user_id
 
     @staticmethod
+    async def change_user_password(email: str, password: str, session) -> UUID | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            updated_user_id = await user_dal.update_user_password(
+                email=email, hashed_password=Hasher.get_password_hash(password)
+            )
+            return updated_user_id
+
+    @staticmethod
+    async def update_user_photo(username: str, image_s3: str, session) -> User | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            updated_user = await user_dal.update_user_photo(
+                username=username, image_s3=image_s3
+            )
+            return updated_user
+
+    @staticmethod
     async def get_user_by_id(user_id, session) -> User | None:
         async with session.begin():
             user_dal = UserDAL(session)
@@ -68,3 +86,33 @@ class UserCRUD:
             user_dal = UserDAL(session)
             deleted_user_id = await user_dal.delete_user(user_id=user_id)
             return deleted_user_id
+
+    @staticmethod
+    async def get_user_by_email(email, session) -> User | None:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            user = await user_dal.get_user_by_email(email=email)
+            if user is not None:
+                return user
+
+    @staticmethod
+    async def get_users_by_query_params(
+        page: int,
+        limit: int,
+        filter_by_name: str,
+        sort_by: str,
+        order_by: str,
+        group_name: str,
+        session,
+    ):
+        async with session.begin():
+            user_dal = UserDAL(session)
+            users = await user_dal.get_user_with_query_params(
+                page=page,
+                limit=limit,
+                filter_by_name=filter_by_name,
+                sort_by=sort_by,
+                order_by=order_by,
+                group_name=group_name,
+            )
+            return users

@@ -1,40 +1,65 @@
-version: ${VERSION}
+version: "3.8"
 services:
-  db:
-    image: ${IMAGE_NAME}
-    restart: always
-    environment:
-      - POSTGRES_DB={DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+  api:
+    build: .
     ports:
-      - ${DB_PORTS}
-    networks:
-      - custom
+      - "8000:8000"
+    volumes:
+      - app:/user_management_service/app
     env_file:
       - .env
-  db_test:
-    image: ${IMAGE_NAME}
+    depends_on:
+      - postgres
+      - postgres-test
+      - localstack
+      - redis
+    command: >
+      sh -c "alembic upgrade heads & uvicorn main:app --host 0.0.0.0 --port 8000"
+      
+
+  postgres:
+    image: postgres:15
     restart: always
     environment:
-      - POSTGRES_DB={DB_TEST_NAME}
-      - POSTGRES_USER=${DB_TEST_USER}
-      - POSTGRES_PASSWORD=${DB_TEST_PASSWORD}
+      - PGUSER=${POSTGRES_USER}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - PGDATABASE=${POSTGRES_DB}
+      - PGHOST=${POSTGRES_HOST}
+      - PGPORT=${POSTGRES_PORT}
     ports:
-      - ${DB_TEST_PORTS}
-    networks:
-      - custom
-  app:
-    build:
-      context: .
-      target: builder
-    container_name: fastapi-application
-    environment:
-      PORT: 8000
-    ports:
-      - '8000:8000'
-    restart: "no"
+      - "5432:5432"
+    env_file:
+      - .env
 
-networks:
-  custom:
-    driver: bridge
+
+  postgres-test:
+    image: postgres:15
+    restart: always
+    environment:
+      - PGUSER=${POSTGRES_TEST_USER}
+      - PGPASSWORD=${POSTGRES_TEST_PASSWORD}
+      - PGDATABASE=${POSTGRES_TEST_DB}
+      - PGHOST=${POSTGRES_TEST_HOST}
+      - PGPORT=${POSTGRES_TEST_PORT}
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env
+
+  redis:
+    image: redis:latest
+    command: redis-server
+
+    ports:
+      - "6379:6379"
+
+  localstack:
+    image: localstack/localstack
+    command: localstack start
+    ports:
+      - '4566:4566'
+
+volumes:
+  app:
+
+
