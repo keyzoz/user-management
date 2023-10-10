@@ -18,7 +18,6 @@ class UserCreate(TunedModel):
     username: str
     phone_number: str
     email: EmailStr
-    image_s3: str
     password: str
     group_name: str
 
@@ -73,7 +72,7 @@ class ShowUser(TunedModel):
     phone_number: str
     group_name: str
     email: EmailStr
-    image_s3: str
+    image_s3: str | None
     is_blocked: bool
     created_at: datetime
     updated_at: datetime | None

@@ -19,7 +19,6 @@ class UserCRUD:
                 phone_number=body.phone_number,
                 group_name=body.group_name,
                 email=body.email,
-                image_s3=body.image_s3,
                 hashed_password=Hasher.get_password_hash(body.password),
                 role=Roles.USER_USER,
             )

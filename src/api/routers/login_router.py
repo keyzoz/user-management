@@ -31,7 +31,9 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    access_token = Authorize.create_access_token(subject=user.username)
+    access_token = Authorize.create_access_token(
+        subject=user.username, user_claims={"role": user.role, "group": user.group_name}
+    )
     refresh_token = Authorize.create_refresh_token(subject=user.username)
     return Token(
         access_token=access_token, refresh_token=refresh_token, token_type="Bearer"
@@ -39,7 +41,11 @@ async def login(
 
 
 @login_router.post("/refresh-token")
-def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
+def refresh(
+    Authorize: AuthJWT = Depends(),
+    redis=Depends(get_redis_client),
+    session: AsyncSession = Depends(get_db),
+):
     try:
         Authorize.jwt_refresh_token_required()
     except Exception:
@@ -49,19 +55,23 @@ def refresh(Authorize: AuthJWT = Depends(), redis=Depends(get_redis_client)):
         )
     current_user = Authorize.get_jwt_subject()
     jti_of_token = Authorize.get_raw_jwt().get("jti")
+    reset_token_service = ResetTokenService()
+    reset_token_service.redis_storage = redis
     try:
-        store_token = ResetTokenService.get_jti(redis, username=current_user)
+        store_token = reset_token_service.get_jti(username=current_user)
     except Exception as e:
         return {"error": f"error: {str(e)}"}
-    print(store_token)
-    if store_token.decode("utf-8") == jti_of_token:
+    if store_token is not None:
         raise HTTPException(
             status_code=422,
-            detail="Old Token",
+            detail="Old/Invalid Token",
         )
 
-    ResetTokenService.store_jti(redis, current_user, jti_of_token)
-    new_access_token = Authorize.create_access_token(subject=current_user)
+    reset_token_service.store_jti(current_user, jti_of_token)
+    user = await UserCRUD.get_user_by_username(username=current_user, session=session)
+    new_access_token = Authorize.create_access_token(
+        subject=current_user, user_claims={"role": user.role, "group": user.group_name}
+    )
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
         access_token=new_access_token,
@@ -76,18 +86,17 @@ async def sent_reset_link(
 ):
     user = await UserCRUD.get_user_by_email(email, session)
     if user:
+        reset_token_service = ResetTokenService()
+        reset_token_service.redis_storage = redis
         try:
-            reset_token_service = ResetTokenService()
-            reset_token_service.redis_storage = redis
-
             reset_token_service.generate_and_send_reset_token(email)
-            return {"message": "The token has been sent"}
         except Exception as e:
             logger.error(e)
             raise HTTPException(
                 status_code=500,
                 detail=f"Database error {str(e)}",
             )
+        return {"message": "The token has been sent"}
 
     else:
         raise HTTPException(

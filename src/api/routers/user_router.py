@@ -8,13 +8,13 @@ from fastapi_jwt_auth import AuthJWT
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from settings import localstack_endpoint_url
+import settings
+from settings import AWS_REGION, LOCALSTACK_ENDPOINT_URL
 from src.api.actions.user import UserCRUD
 from src.api.schemas import (DeleteUserResponse, ShowUser, UpdateUser,
                              UserCreate)
 from src.db.database import get_db
-from src.permissons import (is_admin_or_moderator_of_target_group,
-                            is_moderator_of_target_group_or_admin)
+from src.permissons import is_admin, is_admin_or_moderator_of_target_group
 
 logger = getLogger(__name__)
 
@@ -115,7 +115,7 @@ async def update_user_by_id(
 
     user = await UserCRUD.get_user_by_id(user_id, session)
     cur_user = await UserCRUD.get_user_by_username(Authorize.get_jwt_subject(), session)
-    if not is_moderator_of_target_group_or_admin(cur_user, user):
+    if not is_admin(cur_user):
         raise HTTPException(status_code=403, detail="Forbidden")
     if user is None:
         raise HTTPException(
@@ -164,7 +164,7 @@ async def upload_photo(
         raise HTTPException(status_code=498, detail="Invalid Token")
     aws_session = aioboto3.Session()
     async with aws_session.client(
-        "s3", region_name="us-east-1", endpoint_url=localstack_endpoint_url
+        "s3", region_name=AWS_REGION, endpoint_url=LOCALSTACK_ENDPOINT_URL
     ) as s3:
         try:
             if not file.filename.endswith((".jpg", ".jpeg", ".png")):
@@ -176,13 +176,16 @@ async def upload_photo(
 
             await s3.upload_fileobj(
                 Fileobj=io.BytesIO(file_contents),
-                Bucket="sample-bucket",
+                Bucket=settings.SES_BUCKET_NAME,
                 Key=s3_object_key,
             )
-
-            updated_user = await UserCRUD.update_user_photo(
-                Authorize.get_jwt_subject(), s3_object_key, session
-            )
+            try:
+                updated_user = await UserCRUD.update_user_photo(
+                    Authorize.get_jwt_subject(), s3_object_key, session
+                )
+            except Exception as err:
+                logger.error(err)
+                raise HTTPException(status_code=503, detail=f"dfsfsdfdsf")
             return updated_user
         except Exception as err:
             logger.error(err)

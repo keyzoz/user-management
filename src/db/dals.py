@@ -17,7 +17,6 @@ class UserDAL:
         username: str,
         phone_number: str,
         email: str,
-        image_s3: str,
         hashed_password: str,
         group_name: str,
         role=Roles,
@@ -29,7 +28,6 @@ class UserDAL:
             phone_number=phone_number,
             email=email,
             role=role,
-            image_s3=image_s3,
             hashed_password=hashed_password,
             group_name=group_name,
         )
