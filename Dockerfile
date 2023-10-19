@@ -9,3 +9,5 @@ RUN pip install pipenv && pipenv install --dev --system --deploy
 
 COPY . .
 
+
+

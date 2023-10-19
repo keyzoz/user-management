@@ -72,6 +72,7 @@ class ShowUser(TunedModel):
     phone_number: str
     group_name: str
     email: EmailStr
+    role: str
     image_s3: str | None
     is_blocked: bool
     created_at: datetime

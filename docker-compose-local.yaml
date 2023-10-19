@@ -1,21 +1,5 @@
 version: "3.8"
 services:
-  api:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - app:/user_management_service/app
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-      - postgres-test
-      - localstack
-      - redis
-    command: >
-      sh -c "alembic upgrade heads & uvicorn main:app --host 0.0.0.0 --port 8000"
-      
 
   postgres:
     image: postgres:15
@@ -26,6 +10,7 @@ services:
       - PGDATABASE=${POSTGRES_DB}
       - PGHOST=${POSTGRES_HOST}
       - PGPORT=${POSTGRES_PORT}
+
     ports:
       - "5432:5432"
     env_file:
@@ -58,6 +43,23 @@ services:
     command: localstack start
     ports:
       - '4566:4566'
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - app:/user_management_service/app
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - postgres-test
+      - localstack
+      - redis
+
+    command: >
+      sh -c "sleep 2 && alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000"
 
 volumes:
   app:

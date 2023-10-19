@@ -32,7 +32,8 @@ async def login(
             detail="Incorrect username or password",
         )
     access_token = Authorize.create_access_token(
-        subject=user.username, user_claims={"role": user.role, "group": user.group_name}
+        subject=user.username,
+        user_claims={"role": user.role, "user_id": str(user.user_id)},
     )
     refresh_token = Authorize.create_refresh_token(subject=user.username)
     return Token(
@@ -41,7 +42,7 @@ async def login(
 
 
 @login_router.post("/refresh-token")
-def refresh(
+async def refresh(
     Authorize: AuthJWT = Depends(),
     redis=Depends(get_redis_client),
     session: AsyncSession = Depends(get_db),
@@ -70,7 +71,8 @@ def refresh(
     reset_token_service.store_jti(current_user, jti_of_token)
     user = await UserCRUD.get_user_by_username(username=current_user, session=session)
     new_access_token = Authorize.create_access_token(
-        subject=current_user, user_claims={"role": user.role, "group": user.group_name}
+        subject=current_user,
+        user_claims={"role": user.role, "user_id": str(user.user_id)},
     )
     new_refresh_token = Authorize.create_refresh_token(subject=current_user)
     return Token(
