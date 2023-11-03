@@ -76,6 +76,7 @@ async def test_patch_user_with_moderator_role(
     data = generate_random_moderator_data
     password = data[0]
     user_data = data[1]
+
     group_name = generate_group_name
 
     user_data["group_name"] = group_name
